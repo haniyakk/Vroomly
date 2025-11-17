@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import { Screen } from '../types';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
+import { supabase } from '../backend/supabaseClient';
 
 interface SettingsItemProps {
     icon: React.ReactNode;
@@ -24,6 +25,11 @@ const SettingsItem: React.FC<SettingsItemProps> = ({ icon, label, onClick }) => 
 const SettingsScreen: React.FC = () => {
     const { setScreen, logout } = useAppContext();
     
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        logout();
+    };
+
     const handleDeleteAccount = () => {
         if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
             alert("Account Deleted (mock)!");
@@ -53,7 +59,7 @@ const SettingsScreen: React.FC = () => {
                  <SettingsItem
                     icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>}
                     label="Logout"
-                    onClick={logout}
+                    onClick={handleLogout}
                 />
             </main>
             <BottomNav />

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
@@ -33,11 +33,23 @@ const ProfileScreen: React.FC = () => {
   const { user, addNotification } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    fullName: user?.fullName || '',
-    email: user?.email || '',
-    id: user?.role === 'Student' ? user?.studentId : user?.cnic,
-    department: user?.department || 'N/A',
+    fullName: '',
+    email: '',
+    id: '',
+    department: 'N/A',
   });
+
+  // Sync user data from context whenever it changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        fullName: user.fullName || '',
+        email: user.email || '',
+        id: user.role === 'Student' ? (user.studentId || '') : (user.cnic || ''),
+        department: user.department || 'N/A',
+      });
+    }
+  }, [user]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof typeof profileData) => {
     setProfileData(prev => ({...prev, [field]: e.target.value}));

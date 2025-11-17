@@ -1,35 +1,174 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Screen, User } from '../types';
 import { VanIcon } from '../constants';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import { studentSignUp, driverSignUp, login as authLogin } from '../backend/supabaseAuth';
 
 const AuthScreen: React.FC = () => {
-  const { role, login, setScreen } = useAppContext();
+  const { role, login, setScreen, addNotification } = useAppContext();
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    studentId: '',
+    cnic: '',
+    department: '',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock user login
-    const mockUser: User = {
-      id: '123',
-      fullName: 'Hamza Khan',
-      email: `student@example.com`,
-      role: role!,
-      studentId: role === 'Student' ? '01-00000-000' : undefined,
-      cnic: role === 'Driver' ? '00000-0000000-0' : undefined,
-      department: 'Computer Science Department',
-    };
-    login(mockUser);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
-  const commonFields = (
-    <>
-      <Input label="Email" id="email" type="email" placeholder={role === 'Student' ? "Student@example.com" : "Driver@example.com"} required />
-      <Input label="Password" id="password" type="password" placeholder="********" required />
-    </>
-  );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // LOGIN FLOW
+        const result = await authLogin({ email: formData.email, password: formData.password });
+        
+        if (result.error) {
+          addNotification({
+            title: 'Login Failed',
+            message: result.error,
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // Create user object and login with context
+        const userData = result.profile;
+        console.log('Logged in user data:', userData);
+        const user: User = {
+          id: userData.id,
+          fullName: userData.name,
+          email: userData.email,
+          role: userData.user_type === 'student' ? 'Student' : 'Driver',
+          studentId: userData.reg_no,
+          cnic: userData.cnic,
+          department: userData.department,
+        };
+
+        login(user);
+        addNotification({
+          title: 'Welcome!',
+          message: `Login successful!`,
+          targetRole: user.role,
+        });
+
+      } else {
+        // SIGNUP FLOW
+        if (!formData.email || !formData.password || !formData.fullName) {
+          addNotification({
+            title: 'Validation Error',
+            message: 'Please fill in all required fields',
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        if (role === 'Student' && !formData.studentId) {
+          addNotification({
+            title: 'Validation Error',
+            message: 'Student ID is required',
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        if (role === 'Driver' && !formData.cnic) {
+          addNotification({
+            title: 'Validation Error',
+            message: 'CNIC is required',
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // Sign up based on role
+        let result;
+        if (role === 'Student') {
+          result = await studentSignUp({
+            name: formData.fullName,
+            reg_no: formData.studentId,
+            email: formData.email,
+            department: formData.department,
+            password: formData.password,
+          });
+        } else {
+          result = await driverSignUp({
+            name: formData.fullName,
+            cnic: formData.cnic,
+            email: formData.email,
+            password: formData.password,
+          });
+        }
+
+        if (result.error) {
+          addNotification({
+            title: 'Sign Up Failed',
+            message: result.error,
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        // Log in user after successful signup
+        const loginResult = await authLogin({ email: formData.email, password: formData.password });
+        if (loginResult.error) {
+          addNotification({
+            title: 'Auto-login Failed',
+            message: loginResult.error,
+            targetRole: undefined,
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        const userData = loginResult.profile;
+        const user: User = {
+          id: userData.id,
+          fullName: userData.name,
+          email: userData.email,
+          role: userData.user_type === 'student' ? 'Student' : 'Driver',
+          studentId: userData.reg_no,
+          cnic: userData.cnic,
+          department: userData.department,
+        };
+
+        login(user);
+        addNotification({
+          title: 'Welcome!',
+          message: `Account created successfully!`,
+          targetRole: user.role,
+        });
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      addNotification({
+        title: 'Error',
+        message: 'An unexpected error occurred',
+        targetRole: undefined,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col p-8 text-white overflow-y-auto">
@@ -49,18 +188,77 @@ const AuthScreen: React.FC = () => {
       </div>
 
       <div className="flex-grow">
-        <h2 className="text-2xl font-bold mb-4">Welcome Back</h2>
+        <h2 className="text-2xl font-bold mb-4">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
           {!isLogin && (
               <>
-                <Input label="Full Name" id="fullName" type="text" placeholder="Hamza Khan" required />
-                <Input label={role === 'Student' ? "Student ID" : "CNIC Number"} id="roleId" type="text" placeholder={role === 'Student' ? "00000" : "0000-0000000-0"} required />
+                <Input 
+                  label="Full Name" 
+                  id="fullName" 
+                  type="text" 
+                  placeholder="John Doe" 
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  required 
+                />
+                {role === 'Student' && (
+                  <>
+                    <Input 
+                      label="Student ID" 
+                      id="studentId" 
+                      type="text" 
+                      placeholder="01-00000-000"
+                      value={formData.studentId}
+                      onChange={handleInputChange}
+                      required 
+                    />
+                    <Input 
+                      label="Department" 
+                      id="department" 
+                      type="text" 
+                      placeholder="Computer Science Department"
+                      value={formData.department}
+                      onChange={handleInputChange}
+                    />
+                  </>
+                )}
+                {role === 'Driver' && (
+                  <Input 
+                    label="CNIC Number" 
+                    id="cnic" 
+                    type="text" 
+                    placeholder="0000-0000000-0"
+                    value={formData.cnic}
+                    onChange={handleInputChange}
+                    required 
+                  />
+                )}
               </>
           )}
-          {commonFields}
+          
+          <Input 
+            label="Email" 
+            id="email" 
+            type="email" 
+            placeholder={role === 'Student' ? "student@example.com" : "driver@example.com"}
+            value={formData.email}
+            onChange={handleInputChange}
+            required 
+          />
+          <Input 
+            label="Password" 
+            id="password" 
+            type="password" 
+            placeholder="••••••••"
+            value={formData.password}
+            onChange={handleInputChange}
+            required 
+          />
           
           <div className="pt-4">
-            <Button type="submit">{isLogin ? 'LOGIN' : 'SIGN UP'}</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Processing...' : (isLogin ? 'LOGIN' : 'SIGN UP')}
+            </Button>
           </div>
         </form>
         

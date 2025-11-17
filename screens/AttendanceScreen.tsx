@@ -1,30 +1,37 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Screen, Student as StudentType, AttendanceStatus } from '../types';
 import { MOCK_STUDENTS } from '../constants';
 import Button from '../components/Button';
+import { fetchViewList } from '../backend/supabaseSessionApi';
 
 const AttendanceButton: React.FC<{
   label: AttendanceStatus;
   isActive: boolean;
   onClick: () => void;
-}> = ({ label, isActive, onClick }) => {
+  disabled?: boolean;
+}> = ({ label, isActive, onClick, disabled }) => {
   const activeClasses = {
     [AttendanceStatus.PRESENT]: 'bg-green-500 text-white',
     [AttendanceStatus.ABSENT]: 'bg-red-500 text-white',
     [AttendanceStatus.PENDING]: 'bg-yellow-500 text-white',
   }
   return (
-    <button onClick={onClick} className={`px-2 py-1 text-xs rounded transition-all ${isActive ? activeClasses[label] : 'bg-white/20 text-white/80'}`}>
+    <button
+      onClick={() => { if (!disabled) onClick(); }}
+      disabled={disabled}
+      className={`px-2 py-1 text-xs rounded transition-all ${isActive ? activeClasses[label] : 'bg-white/20 text-white/80'} ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+    >
       {label}
     </button>
   );
 };
 
 const StudentRow: React.FC<{
-    student: StudentType;
-    onStatusChange: (id: string, status: AttendanceStatus) => void;
-}> = ({ student, onStatusChange }) => {
+  student: StudentType;
+  onStatusChange: (id: string, status: AttendanceStatus) => void;
+  disabled?: boolean;
+}> = ({ student, onStatusChange, disabled }) => {
     return (
         <div className="bg-white/10 p-3 rounded-lg flex justify-between items-center">
             <div>
@@ -32,16 +39,16 @@ const StudentRow: React.FC<{
                 <p className="text-xs text-white/70">{student.studentId}</p>
             </div>
             <div className="flex space-x-1.5">
-                <AttendanceButton label={AttendanceStatus.PRESENT} isActive={student.status === AttendanceStatus.PRESENT} onClick={() => onStatusChange(student.id, AttendanceStatus.PRESENT)} />
-                <AttendanceButton label={AttendanceStatus.ABSENT} isActive={student.status === AttendanceStatus.ABSENT} onClick={() => onStatusChange(student.id, AttendanceStatus.ABSENT)} />
-                <AttendanceButton label={AttendanceStatus.PENDING} isActive={student.status === AttendanceStatus.PENDING} onClick={() => onStatusChange(student.id, AttendanceStatus.PENDING)} />
+        <AttendanceButton label={AttendanceStatus.PRESENT} isActive={student.status === AttendanceStatus.PRESENT} onClick={() => onStatusChange(student.id, AttendanceStatus.PRESENT)} disabled={disabled} />
+        <AttendanceButton label={AttendanceStatus.ABSENT} isActive={student.status === AttendanceStatus.ABSENT} onClick={() => onStatusChange(student.id, AttendanceStatus.ABSENT)} disabled={disabled} />
+        <AttendanceButton label={AttendanceStatus.PENDING} isActive={student.status === AttendanceStatus.PENDING} onClick={() => onStatusChange(student.id, AttendanceStatus.PENDING)} disabled={disabled} />
             </div>
         </div>
     );
 };
 
 const AttendanceScreen: React.FC = () => {
-  const { setScreen, addNotification } = useAppContext();
+  const { setScreen, addNotification, role } = useAppContext();
   const [students, setStudents] = useState<StudentType[]>(MOCK_STUDENTS);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLocked, setIsLocked] = useState(false);
@@ -53,6 +60,29 @@ const AttendanceScreen: React.FC = () => {
     if(isLocked) return;
     setStudents(prev => prev.map(s => s.id === id ? {...s, status} : s));
   };
+
+  // If there is an active session, fetch live attendance list for driver view
+  useEffect(() => {
+    const sessionId = localStorage.getItem('active_session');
+    if (!sessionId) return;
+
+    fetchViewList(sessionId).then(res => {
+      if (res.error) {
+        console.error('fetchViewList error', res.error);
+        return;
+      }
+
+      // Map returned rows to StudentType
+      const mapped: StudentType[] = (res.data || []).map((row: any) => ({
+        id: row.student_id,
+        name: row.users?.name || 'Unknown',
+        studentId: row.users?.reg_no || '',
+        status: row.status === 'present' ? AttendanceStatus.PRESENT : (row.status === 'coming' ? AttendanceStatus.PENDING : AttendanceStatus.ABSENT),
+      }));
+
+      setStudents(mapped);
+    }).catch(err => console.error('fetchViewList exception', err));
+  }, []);
   
   const filteredStudents = useMemo(() => {
     let list = students.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -108,7 +138,7 @@ const AttendanceScreen: React.FC = () => {
 
         <div className="flex-grow overflow-y-auto space-y-3 pr-2">
             {filteredStudents.length > 0 ? filteredStudents.map(student => (
-                <StudentRow key={student.id} student={student} onStatusChange={handleStatusChange} />
+              <StudentRow key={student.id} student={student} onStatusChange={handleStatusChange} disabled={role === 'Driver'} />
             )) : <p className="text-center text-white/70">No students found.</p>}
         </div>
       </main>

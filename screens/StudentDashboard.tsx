@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
+import { markStatus } from '../backend/supabaseSessionApi';
 import { Screen } from '../types';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
@@ -32,6 +33,35 @@ const StudentDashboard: React.FC = () => {
                 <ReminderCard time="Evening" pickup="5:00 pm" />
             </div>
         </div>
+
+                <div className="bg-white/10 p-4 rounded-lg flex flex-col items-center justify-center space-y-3 border border-white/12 hover:shadow-md transition-shadow">
+                    <div className="text-center">
+                        <h3 className="font-semibold text-lg">Mark your status</h3>
+                        <p className="text-white/70 text-sm">Select your attendance for this session.</p>
+                    </div>
+                    <div className="flex items-center justify-center space-x-4">
+                        <button onClick={async () => {
+                                const studentId = user?.id;
+                                const sessionId = localStorage.getItem('active_session');
+                                if (!studentId || !sessionId) {
+                                    alert('No active session or not signed in');
+                                    return;
+                                }
+                                const res = await markStatus({ studentId, sessionId, status: 'present' });
+                                if (res.error) alert(res.error); else alert('Status updated!');
+                        }} className="px-4 py-2 bg-green-500 rounded">Present</button>
+                        <button onClick={async () => {
+                                const studentId = user?.id;
+                                const sessionId = localStorage.getItem('active_session');
+                                if (!studentId || !sessionId) {
+                                    alert('No active session or not signed in');
+                                    return;
+                                }
+                                const res = await markStatus({ studentId, sessionId, status: 'coming' });
+                                if (res.error) alert(res.error); else alert('Status updated!');
+                        }} className="px-4 py-2 bg-yellow-500 rounded">Coming</button>
+                    </div>
+                </div>
 
         <div className="bg-white/10 p-4 rounded-lg flex items-center justify-between border border-white/12 hover:shadow-md transition-shadow">
              <div>
