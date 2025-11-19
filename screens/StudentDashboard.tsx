@@ -14,7 +14,7 @@ const ReminderCard: React.FC<{ time: string; pickup: string }> = ({ time, pickup
 );
 
 const StudentDashboard: React.FC = () => {
-  const { user, setScreen } = useAppContext();
+    const { user, setScreen, addNotification } = useAppContext();
 
   return (
     <div className="w-full h-full flex flex-col text-white">
@@ -44,21 +44,21 @@ const StudentDashboard: React.FC = () => {
                                 const studentId = user?.id;
                                 const sessionId = localStorage.getItem('active_session');
                                 if (!studentId || !sessionId) {
-                                    alert('No active session or not signed in');
+                                    addNotification({ title: 'Error', message: 'No active session or not signed in' });
                                     return;
                                 }
                                 const res = await markStatus({ studentId, sessionId, status: 'present' });
-                                if (res.error) alert(res.error); else alert('Status updated!');
+                                if (res.error) addNotification({ title: 'Error', message: res.error }); else addNotification({ title: 'Status updated', message: 'Your attendance has been recorded.' });
                         }} className="px-4 py-2 bg-green-500 rounded">Present</button>
                         <button onClick={async () => {
                                 const studentId = user?.id;
                                 const sessionId = localStorage.getItem('active_session');
                                 if (!studentId || !sessionId) {
-                                    alert('No active session or not signed in');
+                                    addNotification({ title: 'Error', message: 'No active session or not signed in' });
                                     return;
                                 }
                                 const res = await markStatus({ studentId, sessionId, status: 'coming' });
-                                if (res.error) alert(res.error); else alert('Status updated!');
+                                if (res.error) addNotification({ title: 'Error', message: res.error }); else addNotification({ title: 'Status updated', message: 'Your attendance has been recorded.' });
                         }} className="px-4 py-2 bg-yellow-500 rounded">Coming</button>
                     </div>
                 </div>

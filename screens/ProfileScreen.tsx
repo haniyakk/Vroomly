@@ -3,35 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import BottomNav from '../components/BottomNav';
 import Header from '../components/Header';
-import Button from '../components/Button';
+
 
 interface ProfileFieldProps {
   label: string;
   value: string;
-  isEditing: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const ProfileField: React.FC<ProfileFieldProps> = ({ label, value, isEditing, onChange }) => (
+const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
   <div>
     <label className="text-sm text-white/70">{label}</label>
-    {isEditing ? (
-      <input
-        type="text"
-        value={value}
-        onChange={onChange}
-        className="w-full bg-white/10 border-b-2 border-pink-400 text-white rounded-t-lg px-2 py-1.5 focus:outline-none"
-      />
-    ) : (
-      <p className="text-lg font-semibold text-white p-2">{value}</p>
-    )}
+    <p className="text-lg font-semibold text-white p-2">{value}</p>
   </div>
 );
 
 
 const ProfileScreen: React.FC = () => {
-  const { user, addNotification } = useAppContext();
-  const [isEditing, setIsEditing] = useState(false);
+  const { user } = useAppContext();
   const [profileData, setProfileData] = useState({
     fullName: '',
     email: '',
@@ -51,15 +39,7 @@ const ProfileScreen: React.FC = () => {
     }
   }, [user]);
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof typeof profileData) => {
-    setProfileData(prev => ({...prev, [field]: e.target.value}));
-  };
-
-  const handleSave = () => {
-      // Here you would typically call an API to save the profile data.
-      addNotification({ title: 'Profile Updated', message: 'Your changes have been saved successfully.' });
-      setIsEditing(false);
-  }
+  // Profile is view-only in this app. Edits are not available from the mobile UI.
 
   return (
     <div className="w-full h-full flex flex-col text-white">
@@ -74,21 +54,15 @@ const ProfileScreen: React.FC = () => {
         </div>
 
         <div className="space-y-4 bg-white/10 p-4 rounded-lg">
-            <ProfileField label="Full Name" value={profileData.fullName} isEditing={isEditing} onChange={(e) => handleInputChange(e, 'fullName')} />
-            <ProfileField label="Email Address" value={profileData.email} isEditing={isEditing} onChange={(e) => handleInputChange(e, 'email')} />
-            <ProfileField label={user?.role === 'Student' ? "Student ID" : "CNIC"} value={profileData.id || ''} isEditing={isEditing} onChange={(e) => handleInputChange(e, 'id')} />
+            <ProfileField label="Full Name" value={profileData.fullName} />
+            <ProfileField label="Email Address" value={profileData.email} />
+            <ProfileField label={user?.role === 'Student' ? "Student ID" : "CNIC"} value={profileData.id || ''} />
             {user?.role === 'Student' && (
-                <ProfileField label="Department" value={profileData.department} isEditing={isEditing} onChange={(e) => handleInputChange(e, 'department')} />
+                <ProfileField label="Department" value={profileData.department} />
             )}
         </div>
         
-        <div className="mt-auto">
-            {isEditing ? (
-                 <Button onClick={handleSave}>Save Profile</Button>
-            ) : (
-                <Button onClick={() => setIsEditing(true)} variant="secondary">Edit Profile</Button>
-            )}
-        </div>
+        {/* No edit controls in view-only profile */}
         
 
       </main>
