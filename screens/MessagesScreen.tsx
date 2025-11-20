@@ -43,8 +43,10 @@ const MessagesScreen: React.FC = () => {
                 return;
             }
 
-            // compute driverId
-            const myDriverId = (myProfile.driver_id as string) || (user.role === 'driver' ? user.id : null);
+                        // compute driverId (safer): drivers should use their own user.id, students use their profile.driver_id
+                        const myDriverId = user.user_type === 'driver'
+                            ? user.id
+                            : myProfile.driver_id;
             if (!myDriverId) {
                 // no driver assigned yet
                 setDriverId(null);
@@ -159,7 +161,8 @@ const MessagesScreen: React.FC = () => {
         ]);
         setNewMessage('');
 
-        const { error } = await supabase.from('messages').insert([payload]);
+        const { data, error } = await supabase.from('messages').insert([payload]);
+        console.log("DEBUG insert response:", data, error);
         if (error) {
             console.error('Send message error', error);
             // optionally show failure and remove temp message

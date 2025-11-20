@@ -47,7 +47,10 @@ const ProfileScreen: React.FC = () => {
       <main className="flex-grow p-6 space-y-6 overflow-y-auto pb-24 flex flex-col">
         <div className="flex flex-col items-center space-y-2">
             <div className="w-28 h-28 rounded-full bg-pink-300 flex items-center justify-center">
-                <img src={`https://i.pravatar.cc/150?u=${user?.id}`} alt="User" className="w-full h-full rounded-full object-cover" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-[#3A3A69]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
             </div>
             <h2 className="text-2xl font-bold">{profileData.fullName}</h2>
             <p className="text-white/70">{user?.role}</p>

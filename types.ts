@@ -22,6 +22,7 @@ export interface User {
   studentId?: string;
   cnic?: string;
   department?: string;
+  user_type?: string;
 }
 
 export enum AttendanceStatus {

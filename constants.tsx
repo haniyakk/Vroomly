@@ -57,7 +57,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     {
         id: '1',
         name: 'Ali (Driver)',
-        avatar: 'https://i.pravatar.cc/150?u=driver1',
+        avatar: '',
         messages: [
             { id: 1, text: 'Hi, just a reminder that the morning pickup is at 7:00 AM sharp tomorrow.', sender: 'other', timestamp: '8:15 PM' },
             { id: 2, text: 'Got it, thanks for the heads up!', sender: 'me', timestamp: '8:16 PM' },
