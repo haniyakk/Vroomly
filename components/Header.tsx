@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, onBack }
             ) : (
                 <div className="flex items-center gap-2">
                     <VanIcon width={40} height={25} />
-                    <h1 className="text-xl font-bold">VROOMLY</h1>
+                  <h1 className="text-xl font-bold">VROOMLY</h1>
                 </div>
             )}
         </div>

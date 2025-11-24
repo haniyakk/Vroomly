@@ -144,7 +144,6 @@ const AttendanceScreen: React.FC = () => {
       
       <footer className="p-6 border-t border-white/10">
         <Button onClick={handleSendReminder}>Send Reminder</Button>
-        <p className="text-center text-sm text-white/70 mt-3">Attendance locks at 7:10 AM</p>
       </footer>
     </div>
   );
