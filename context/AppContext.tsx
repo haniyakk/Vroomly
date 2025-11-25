@@ -24,8 +24,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const login = (userData: User) => {
-    setUser(userData);
-    setRole(userData.role);
+    const formatDisplayName = (u: User) => {
+      try {
+        if (u.role === 'Driver') {
+          const current = u.fullName || '';
+          if (/^Mr\.\s+/i.test(current)) return u;
+          return { ...u, fullName: `Mr. ${current}` };
+        }
+      } catch (e) {
+        // fallback to original
+      }
+      return u;
+    };
+
+    const formatted = formatDisplayName(userData);
+    setUser(formatted);
+    setRole(formatted.role);
     setScreen(Screen.DASHBOARD);
   };
 

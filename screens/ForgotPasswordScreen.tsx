@@ -10,6 +10,7 @@ const ForgotPasswordScreen: React.FC = () => {
   const { setScreen, addNotification } = useAppContext();
   const [email, setEmail] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const isChangePasswordMode = localStorage.getItem('changePasswordMode') === 'true';
 
   const handleSendLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,22 +32,23 @@ const ForgotPasswordScreen: React.FC = () => {
 
     addNotification({
       title: 'Success',
-      message: 'Password reset link sent to your email!',
+      message: isChangePasswordMode ? 'Password reset link sent to your email!' : 'Password reset link sent to your email!',
     });
-    setScreen(Screen.AUTH);
+    setScreen(isChangePasswordMode ? Screen.SETTINGS : Screen.AUTH);
+    localStorage.removeItem('changePasswordMode');
   };
 
   return (
     <div className="w-full h-full flex flex-col p-8 text-white bg-[#3A3A69]">
-        <button onClick={() => setScreen(Screen.AUTH)} className="self-start text-pink-300 mb-8 flex items-center gap-2">
+        <button onClick={() => { localStorage.removeItem('changePasswordMode'); setScreen(isChangePasswordMode ? Screen.SETTINGS : Screen.AUTH); }} className="self-start text-pink-300 mb-8 flex items-center gap-2">
              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             Back to Login
         </button>
 
         <div className="flex flex-col items-center">
             <VanIcon />
-            <h1 className="text-3xl font-bold mt-4">Forgot Password?</h1>
-            <p className="text-white/80 mt-2 text-center">No worries! Enter your email and we'll send you a reset link.</p>
+            <h1 className="text-3xl font-bold mt-4">{isChangePasswordMode ? 'Change Password' : 'Forgot Password?'}</h1>
+            <p className="text-white/80 mt-2 text-center">{isChangePasswordMode ? 'Enter your email to reset your password.' : 'No worries! Enter your email and we\'ll send you a reset link.'}</p>
         </div>
 
       <form className="space-y-6 mt-12" onSubmit={handleSendLink}>

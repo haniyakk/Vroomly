@@ -21,7 +21,7 @@ const StudentDashboard: React.FC = () => {
       <Header />
       <main className="flex-grow p-6 space-y-6 overflow-y-auto pb-24">
         <div className="bg-white/10 border border-white/12 p-4 rounded-lg backdrop-blur-sm shadow-sm">
-            <h2 className="text-2xl font-bold">WELCOME {user?.fullName?.split(' ')[0].toUpperCase() || 'STUDENT'}</h2>
+            <h2 className="text-2xl font-bold">WELCOME {user?.fullName?.replace(/^Mr\. /i, '').split(' ')[0].toUpperCase() || 'STUDENT'}</h2>
             <p className="text-white/70">Are you ready for today's ride?</p>
         </div>
 

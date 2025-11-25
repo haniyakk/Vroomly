@@ -206,10 +206,10 @@ const AuthScreen: React.FC = () => {
                 {role === 'Student' && (
                   <>
                     <Input 
-                      label="Student ID" 
+                      label="Registration Number" 
                       id="studentId" 
                       type="text" 
-                      placeholder="01-00000-000"
+                      placeholder="00000"
                       value={formData.studentId}
                       onChange={handleInputChange}
                       required 

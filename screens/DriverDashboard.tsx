@@ -44,7 +44,7 @@ const DriverDashboard: React.FC = () => {
       <Header />
       <main className="flex-grow p-6 space-y-6 overflow-y-auto pb-24">
         <div className="bg-white/10 p-4 rounded-lg border border-white/12 hover:shadow-md transition-shadow">
-            <h2 className="text-2xl font-bold">WELCOME {user?.fullName?.split(' ')[0].toUpperCase() || 'DRIVER'}</h2>
+             <h2 className="text-2xl font-bold">WELCOME {user?.fullName?.toUpperCase() || 'DRIVER'}</h2>
             <p className="text-white/70">Are you ready for today's ride?</p>
         </div>
 
