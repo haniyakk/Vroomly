@@ -51,6 +51,7 @@ const AttendanceScreen: React.FC = () => {
   const [students, setStudents] = useState<StudentType[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLocked, setIsLocked] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const presentCount = useMemo(() => students.filter(s => s.status === AttendanceStatus.PRESENT).length, [students]);
   const capacity = 12;
@@ -60,14 +61,19 @@ const AttendanceScreen: React.FC = () => {
     setStudents(prev => prev.map(s => s.id === id ? {...s, status} : s));
   };
 
-  // If there is an active session, fetch live attendance list for driver view
-  useEffect(() => {
+  const fetchAttendanceData = () => {
     const sessionId = localStorage.getItem('active_session');
     if (!sessionId) return;
 
+    setIsRefreshing(true);
     fetchViewList(sessionId).then(res => {
       if (res.error) {
         console.error('fetchViewList error', res.error);
+        addNotification({
+          title: 'Error',
+          message: 'Failed to refresh attendance list.'
+        });
+        setIsRefreshing(false);
         return;
       }
 
@@ -80,7 +86,20 @@ const AttendanceScreen: React.FC = () => {
       }));
 
       setStudents(mapped);
-    }).catch(err => console.error('fetchViewList exception', err));
+      setIsRefreshing(false);
+      addNotification({
+        title: 'Refreshed',
+        message: 'Attendance list updated.'
+      });
+    }).catch(err => {
+      console.error('fetchViewList exception', err);
+      setIsRefreshing(false);
+    });
+  };
+
+  // If there is an active session, fetch live attendance list for driver view
+  useEffect(() => {
+    fetchAttendanceData();
   }, []);
   
   const filteredStudents = useMemo(() => {
@@ -105,11 +124,21 @@ const AttendanceScreen: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col text-white">
-      <div className="p-4 flex items-center">
-         <button onClick={() => setScreen(Screen.DASHBOARD)} className="mr-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      <div className="p-4 flex items-center justify-between">
+         <div className="flex items-center">
+           <button onClick={() => setScreen(Screen.DASHBOARD)} className="mr-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+           </button>
+           <h1 className="text-xl font-bold">Student Attendance</h1>
+         </div>
+         <button 
+           onClick={fetchAttendanceData}
+           disabled={isRefreshing}
+           className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+           title="Refresh attendance list"
+         >
+           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isRefreshing ? 'animate-spin' : ''}><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path></svg>
          </button>
-         <h1 className="text-xl font-bold">Student Attendance</h1>
       </div>
       
       <main className="flex-grow p-6 pt-0 flex flex-col min-h-0">
