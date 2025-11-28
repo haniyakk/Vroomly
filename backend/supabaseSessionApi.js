@@ -79,7 +79,8 @@ FETCH VIEW LIST FOR DRIVER
 export async function fetchViewList(sessionId) {
   const { data, error } = await supabase
     .from("attendance")
-    .select("status, student_id, users(name, reg_no)")
+    // include user's driver_id so frontend can filter by assigned driver
+    .select("status, student_id, users(name, reg_no, driver_id)")
     .eq("session_id", sessionId);
 
   if (error) return { error: error.message };

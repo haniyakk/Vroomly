@@ -47,7 +47,7 @@ const StudentRow: React.FC<{
 };
 
 const AttendanceScreen: React.FC = () => {
-  const { setScreen, addNotification, role } = useAppContext();
+  const { setScreen, addNotification, role, user } = useAppContext();
   const [students, setStudents] = useState<StudentType[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLocked, setIsLocked] = useState(false);
@@ -78,14 +78,21 @@ const AttendanceScreen: React.FC = () => {
       }
 
       // Map returned rows to StudentType
-      const mapped: StudentType[] = (res.data || []).map((row: any) => ({
-        id: row.student_id,
-        name: row.users?.name || 'Unknown',
-        studentId: row.users?.reg_no || '',
-        status: row.status === 'present' ? AttendanceStatus.PRESENT : (row.status === 'coming' ? AttendanceStatus.PENDING : AttendanceStatus.ABSENT),
-      }));
+        let mapped: any[] = (res.data || []).map((row: any) => ({
+          id: row.student_id,
+          name: row.users?.name || 'Unknown',
+          studentId: row.users?.reg_no || '',
+          driverId: row.users?.driver_id || null,
+          status: row.status === 'present' ? AttendanceStatus.PRESENT : (row.status === 'coming' ? AttendanceStatus.PENDING : AttendanceStatus.ABSENT),
+        }));
 
-      setStudents(mapped);
+        // If current user is a driver, only show students assigned to them
+        if (role === 'Driver' && user?.id) {
+          mapped = mapped.filter((s: any) => s.driverId === user.id);
+        }
+
+        // Remove driverId before storing in state (StudentType doesn't include it)
+        setStudents(mapped.map((s: any) => ({ id: s.id, name: s.name, studentId: s.studentId, status: s.status } as StudentType)));
       setIsRefreshing(false);
       addNotification({
         title: 'Refreshed',
